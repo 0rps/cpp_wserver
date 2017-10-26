@@ -17,7 +17,7 @@
 
 // /home/box/final/final -h <ip> -p <port> -d <directory>
 
-const int constWorkersCount = 8;
+const int constWorkersCount = 1;
 
 static const char *optString = "h:p:d:";
 
@@ -107,22 +107,56 @@ void runServer(int *_sharedMemory, const std::list<int> &_childPids, const std::
     std::string message = "My pid is " + std::to_string(getpid());
     std::cout << message << std::endl;
 
-    for (auto it = _childPids.begin(); it != _childPids.end(); it++) {
-        if ( *it != -1) {
-            int status;
-            waitpid(*it, &status, 0);
-            std::cout << "Server: child process with pid = " << *it << " finished with status = " << status << std::endl;
-        }
-    }
+//    std::string p_childmessage = "YOYOYO! to = ";
 
-    for (int i = 0; i < _childPids.size(); i++) {
-        std::cout << "Server: from " << i << " shared cell read " <<_sharedMemory[i] << " value" << std::endl;
-    }
+//    int j = 0;
+//    for (auto it = _childSockets.begin(); it != _childSockets.end(); it++) {
+//        if ( *it != -1) {
+//            //int status;
+//            std::string temp = p_childmessage + std::to_string(j);
+//            write(*it, temp.c_str(), temp.size() + 1);
+//            std::cout << "Server: send =  " << temp << std::endl;
+//        }
+//        j++;
+//    }
+
+//    for (auto it = _childPids.begin(); it != _childPids.end(); it++) {
+//        if ( *it != -1) {
+//            int status;
+//            waitpid(*it, &status, 0);
+//            std::cout << "Server: child process with pid = " << *it << " finished with status = " << status << std::endl;
+//        }
+//    }
+
+//    for (int i = 0; i < _childPids.size(); i++) {
+//        std::cout << "Server: from " << i << " shared cell read " <<_sharedMemory[i] << " value" << std::endl;
+//    }
+
+
 }
 
 void runClient(int* _sharedMemoryElement, const int _number, const std::string &_dir, const int _sockerFd) {
     std::string message = "My pid is " + std::to_string(getpid());
     std::cout << message << std::endl;
+
+    char buf[512];
+    buf[0] = 0;
+    int count = 0;
+    while(true) {
+        sleep(1);
+        count = read(_sockerFd, buf, 512);
+        std::cout << "Readed " << count << " bytes" << std::endl;
+        if (count == -1) {
+            if (errno == EWOULDBLOCK) {
+                ///
+            } else {
+                break;
+            }
+        }
+
+
+    }
+    std::cout << "Client with pid = " << getpid() << " read: " << buf << std::endl;
 
     *_sharedMemoryElement = getpid();
 }
@@ -168,10 +202,10 @@ void runManagerAndWorkers(struct Parameters &_params, const int _clientsCount) {
         currentNumber++;
     }
 
-    if (!successFlag) {
-        std::cerr << "No workers were forked! Server wasn't started!" << std::endl;
-        return;
-    }
+//    if (!successFlag) {
+//        std::cerr << "No workers were forked! Server wasn't started!" << std::endl;
+//        return;
+//    }
 
     runServer(sharedMemory, p_childsPids, p_childSockets, _params.ip, _params.port);
 }
