@@ -3,7 +3,7 @@
 
 class HttpMessage {
 public:
-    HttpMessage();
+    HttpMessage(const bool isResponse = false);
     ~HttpMessage();
 
     int getCode() const;
@@ -12,16 +12,18 @@ public:
     std::string getRequest() const;
 
     void setCode(int _code);
+    void setRequest(const std::string &_request);
     void setHeader(const std::string &_name, const std::string &_value);
     void setBody(const std::string &_body);
 
     char* getRawMessage();
 
 private:
-    int code;
-    std::string _headers;
-    std::string _body;
-    std::vector<std::pair<std::string, std::string>> m_headers;
+    bool m_isResponse;
+    int m_code;
+    std::string m_request;
+    std::string m_body;
+    std::vector< std::pair<std::string, std::string> > m_headers;
 };
 
 class HttpHandler {
@@ -33,6 +35,11 @@ public:
 
     bool hasMessages() const;
     std::vector<HttpMessage> messages() const;
+
+private:
+    bool parseMessage(int _end);
+    void parseBuffer();
+
 private:
     std::vector<HttpMessage> m_messages;
     char* m_buffer;
