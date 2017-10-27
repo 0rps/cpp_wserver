@@ -14,7 +14,7 @@ Server::Server(int *_shared):
 
 Server::~Server()
 {
-    std::cout << "Server: desctructor" << std::endl;
+    std::cout << "Server: destructor" << std::endl;
 }
 
 void Server::addWorker(const int _number, const int _pid, const int _socket)

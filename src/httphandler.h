@@ -34,10 +34,12 @@ public:
     void addRawData(const char* _data, const int _size);
 
     bool hasMessages() const;
+    HttpMessage pop();
     std::vector<HttpMessage> messages() const;
 
 private:
-    bool parseMessage(int _end);
+    void parseSimpleRequest(std::string &_request);
+    void parseFullRequest(std::string &_request);
     void parseBuffer();
 
 private:

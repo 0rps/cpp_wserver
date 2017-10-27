@@ -1,5 +1,7 @@
 #include "httphandler.h"
 
+#include <iostream>
+
 #include <string.h>
 
 #include <regex>
@@ -67,12 +69,13 @@ void HttpMessage::setBody(const std::string &_body)
 char *HttpMessage::getRawMessage()
 {
     /// TODO:
+    return NULL;
 }
 
 HttpHandler::HttpHandler() :
     m_buffer(NULL), m_maxSize(0), m_size(0)
 {
-    m_maxSize = 256;
+    m_maxSize = 64;
     m_buffer = (char*)malloc(m_maxSize);
 }
 
@@ -91,8 +94,7 @@ void HttpHandler::addRawData(const char *_data, const int _size)
     }
     memcpy(m_buffer + m_size, _data, _size);
     m_size += _size;
-
-
+    parseBuffer();
 }
 
 bool HttpHandler::hasMessages() const
@@ -100,42 +102,118 @@ bool HttpHandler::hasMessages() const
     return m_messages.size();
 }
 
+/// TODO: fix, make list instead of vector
+HttpMessage HttpHandler::pop()
+{
+    HttpMessage msg = m_messages.at(0);
+    m_messages.clear();
+
+    return msg;
+}
+
 std::vector<HttpMessage> HttpHandler::messages() const
 {
     return m_messages;
 }
 
-bool HttpHandler::parseMessage(int _end)
+void HttpHandler::parseSimpleRequest(std::string &_request)
 {
-    std::string request(m_buffer);
-
-    if (_end == m_size-1) {
-        m_size = 0;
-    } else {
-        memmove((void*)(m_buffer+_end+1), (void*)m_buffer, (m_size-1-_end));
-        m_size = m_size-1-_end;
+    HttpMessage msg;
+    if (_request.size() > 4) {
+        msg.setRequest(_request.substr(4));
     }
 
+    std::cout << "new message with simple request: '" << msg.getRequest() << "'" << std::endl;
+    m_messages.push_back(msg);
+}
+
+void HttpHandler::parseFullRequest(std::string &_request)
+{
+    int lastSymbol = _request.find("\r\n");
+    if (lastSymbol == std::string::npos) {
+        lastSymbol = _request.size();
+    }
+
+    HttpMessage msg;
+    int requestURISize = lastSymbol - 4 - 9;
+    msg.setRequest(_request.substr(4, requestURISize));
+
+    std::cout << "new message with full request: '" << msg.getRequest() << "'" << std::endl;
+
+    m_messages.push_back(msg);
 }
 
 void HttpHandler::parseBuffer()
 {
-    if (m_size > 3) {
+    if (m_size > 5) {
         if (memcmp("GET", m_buffer, 3) != 0) {
             return;
         }
+    } else {
+        return;
     }
 
-    int end = -1;
-    for (int i = 2; i < m_size; i++) {
-        if (m_buffer[i] == '\0' && m_buffer[i-1] == '\n' && m_buffer[i-2] == '\n') {
-            end = i;
+    int firstStringSize = -1;
+    for (int i = 1; i < m_size; i++) {
+        if (m_buffer[i-1] == '\r' && m_buffer[i] == '\n') {
+            firstStringSize = i-1;
             break;
         }
     }
 
-    if (end > 0) {
-        parseMessage(end);
+    bool isFullRequest = false;
+    if (firstStringSize > 9) {
+        char httpMarker[] = "HTTP/1.1";
+        int httpMarkerSize = sizeof(httpMarker) - 1;
+        char *markerPossiblePosition = m_buffer + firstStringSize - httpMarkerSize;
+        if (strncmp(markerPossiblePosition, httpMarker, httpMarkerSize) == 0) {
+            isFullRequest = true;
+        }
+    }
+
+    std::string p_firstString(m_size, firstStringSize);
+    std::cout << "First string " << p_firstString << std::endl;
+
+    int cuttedSize = 0;
+
+
+    if (isFullRequest) {
+        int requestLengthWithCRLF = -1;
+        const char endMarker[] = "\r\n\r\n";
+        int endMarkerSize = sizeof(endMarker) - 1;
+        for (int i = firstStringSize; i < m_size; i++) {
+            char* httpMarkerStartPointer = m_buffer + i - endMarkerSize +1 ;
+            if (strncmp(httpMarkerStartPointer, endMarker, endMarkerSize) == 0) {
+                requestLengthWithCRLF = i + 1;
+                break;
+            }
+        }
+
+        if (requestLengthWithCRLF > 0) {
+            cuttedSize = requestLengthWithCRLF;
+            std::string request(m_buffer, requestLengthWithCRLF - endMarkerSize);
+            parseFullRequest(request);
+        }
+
+    } else {
+        cuttedSize = firstStringSize + 2;
+        std::string request(m_buffer, firstStringSize);
+        parseSimpleRequest(request);
+    }
+
+    if (cuttedSize > 0) {
+        if (cuttedSize < m_size) {
+            if (m_buffer[cuttedSize] == '\0') {
+                cuttedSize++;
+            }
+        }
+
+        if (cuttedSize == m_size) {
+            m_size = 0;
+        } else {
+            std::memmove((void*)m_buffer, (void*)(m_buffer+cuttedSize), m_size - cuttedSize);
+            m_size -= cuttedSize;
+        }
         parseBuffer();
     }
 }

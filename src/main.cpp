@@ -12,12 +12,13 @@
 #include <sys/mman.h>
 
 #include "listener.h"
+#include "httphandler.h"
 
 #include <list>
 
 // /home/box/final/final -h <ip> -p <port> -d <directory>
 
-const int constWorkersCount = 1;
+const int constWorkersCount = 0;
 
 static const char *optString = "h:p:d:";
 
@@ -106,6 +107,47 @@ std::pair<int,int> createUnixSocketPair() {
 void runServer(int *_sharedMemory, const std::list<int> &_childPids, const std::list<int> &_childSockets, const std::string &_ip, const int _port) {
     std::string message = "My pid is " + std::to_string(getpid());
     std::cout << message << std::endl;
+
+    Listener listener(_ip, _port);
+
+
+    if (false == listener.start()) {
+        return;
+    }
+    int res = 1;
+
+    HttpHandler p_handler;
+    char buf[72];
+
+    //char data[] = "GET / HTTP/1.1\r\nContent-Length: 1234\r\n\r\n";
+    //int i = sizeof(data);
+
+    //p_handler.addRawData(data, sizeof(data)-1);
+
+    while(res >= 0) {
+        res = listener.nextSocket();
+        if (res > 0) {
+            while (!p_handler.hasMessages()) {
+                int count = read(res, buf, sizeof(buf));
+                p_handler.addRawData(buf, count);
+            }
+
+            HttpMessage p_message = p_handler.pop();
+            std::cout << "handler has messages: " << p_message.getRequest() << std::endl;
+        }
+
+//        if (res > 0) {
+//            int count = read(res, buf, sizeof(buf));
+//            p_handler.addRawData(buf, count);
+
+//            if (p_handler.hasMessages()) {
+
+//                std::cout << "handler has messages: " << p_message.getRequest() << std::endl;
+//            } else {
+//                std::cout << "No messages" << std::endl;
+//            }
+//        }
+    }
 
 //    std::string p_childmessage = "YOYOYO! to = ";
 
