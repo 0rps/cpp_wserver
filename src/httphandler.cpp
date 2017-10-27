@@ -68,8 +68,13 @@ void HttpMessage::setBody(const std::string &_body)
 
 char *HttpMessage::getRawMessage()
 {
-    /// TODO:
-    return NULL;
+//    if (!m_isResponse) {
+//        return NULL;
+//    }
+
+    char* ans = "HTTP/1.1 200 \r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body>HELLO WORLD!<body></html>";
+
+    return ans;
 }
 
 HttpHandler::HttpHandler() :
@@ -102,18 +107,13 @@ bool HttpHandler::hasMessages() const
     return m_messages.size();
 }
 
-/// TODO: fix, make list instead of vector
+
 HttpMessage HttpHandler::pop()
 {
-    HttpMessage msg = m_messages.at(0);
-    m_messages.clear();
+    HttpMessage msg = m_messages.front();
+    m_messages.pop_front();
 
     return msg;
-}
-
-std::vector<HttpMessage> HttpHandler::messages() const
-{
-    return m_messages;
 }
 
 void HttpHandler::parseSimpleRequest(std::string &_request)

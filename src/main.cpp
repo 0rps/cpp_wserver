@@ -11,6 +11,8 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
+#include "string.h"
+
 #include "listener.h"
 #include "httphandler.h"
 
@@ -133,6 +135,9 @@ void runServer(int *_sharedMemory, const std::list<int> &_childPids, const std::
             }
 
             HttpMessage p_message = p_handler.pop();
+
+            char* ans = p_message.getRawMessage();
+            write(res, ans, strlen(ans)-1);
             std::cout << "handler has messages: " << p_message.getRequest() << std::endl;
         }
 

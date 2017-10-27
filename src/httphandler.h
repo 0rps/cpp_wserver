@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <list>
 
 class HttpMessage {
 public:
@@ -35,7 +36,6 @@ public:
 
     bool hasMessages() const;
     HttpMessage pop();
-    std::vector<HttpMessage> messages() const;
 
 private:
     void parseSimpleRequest(std::string &_request);
@@ -43,7 +43,7 @@ private:
     void parseBuffer();
 
 private:
-    std::vector<HttpMessage> m_messages;
+    std::list<HttpMessage> m_messages;
     char* m_buffer;
     int m_size;
     int m_maxSize;
