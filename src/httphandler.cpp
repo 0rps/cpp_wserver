@@ -237,7 +237,7 @@ void HttpHandler::parseBuffer()
         if (cuttedSize == m_size) {
             m_size = 0;
         } else {
-            std::memmove((void*)m_buffer, (void*)(m_buffer+cuttedSize), m_size - cuttedSize);
+            memmove((void*)m_buffer, (void*)(m_buffer+cuttedSize), m_size - cuttedSize);
             m_size -= cuttedSize;
         }
         parseBuffer();
