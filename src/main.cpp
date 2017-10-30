@@ -233,9 +233,9 @@ int main(int argc, char** argv) {
 
     }
 
-//    if (daemonize() == -1) {
-//        exit(EXIT_FAILURE);
-//    }
+    if (daemonize() == -1) {
+        exit(EXIT_FAILURE);
+    }
 
     std::cout << "Params: '" << params.ip << "', port:'" << params.port << "', dir:'" << params.dir << "'" << std::endl << std::endl;
     runManagerAndWorkers(params, WORKERS_COUNT);
