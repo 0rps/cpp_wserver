@@ -1,5 +1,5 @@
 file(GLOB SOURCES ./*.cpp)
 
-add_executable(wserver ${SOURCES})
+add_executable(final ${SOURCES})
 
-target_link_libraries(wserver -lrt)
+target_link_libraries(final -lrt)

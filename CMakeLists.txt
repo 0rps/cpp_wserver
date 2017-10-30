@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(wserver)
+project(final)
 
 set(CMAKE_BUILD_TYPE Debug)
 
