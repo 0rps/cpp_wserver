@@ -193,7 +193,7 @@ int daemonize() {
     if ( pid < 0 )
         return -1; /* fork error */
     if ( pid > 0 )
-        return -1; /* parent exits */
+        exit(0); /* parent exits */
 
     setsid();
 
