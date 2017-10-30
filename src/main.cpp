@@ -198,9 +198,9 @@ int daemonize() {
     setsid();
 
     for (int i=getdtablesize(); i>=0; --i) close(i);
-    /*int iFd =*/ open("/dev/null", O_RDWR);
-    /*int oFd =*/ open(INFO_LOGGER, O_RDWR | O_TRUNC | O_CREAT);
-    /*int eFd = */open(ERROR_LOGGER, O_RDWR | O_TRUNC | O_CREAT);
+    int iFd = open("/dev/null", O_RDWR);
+    int oFd = open(INFO_LOGGER, O_RDWR | O_TRUNC | O_CREAT);
+    int eFd = open(ERROR_LOGGER, O_RDWR | O_TRUNC | O_CREAT);
 //    i=open("/home/box/final.log",O_RDWR | O_TRUNC | O_CREAT);
 //    dup(i); dup(i); /* handle standart I/O */
 
@@ -214,7 +214,7 @@ int daemonize() {
     sprintf(str,"%d\n",getpid());
     write(lfp,str,strlen(str)); /* record pid to lockfile */
 
-    //signal(SIGCHLD,SIG_IGN); /* ignore child */
+    signal(SIGCHLD,SIG_IGN); /* ignore child */
     signal(SIGTSTP,SIG_IGN); /* ignore tty signals */
     signal(SIGTTOU,SIG_IGN);
     signal(SIGTTIN,SIG_IGN);
