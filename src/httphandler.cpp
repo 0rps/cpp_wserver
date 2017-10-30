@@ -55,6 +55,12 @@ void HttpMessage::setCode(MessageType _code)
 void HttpMessage::setRequest(const std::string &_request)
 {
     m_request = _request;
+    for (int i = 0; i < _request.length(); i++) {
+        if (m_request.at(i) == '?') {
+            m_request = m_request.substr(0,i);
+            break;
+        }
+    }
 }
 
 
