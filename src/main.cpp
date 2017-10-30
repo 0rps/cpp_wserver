@@ -217,6 +217,7 @@ int daemonize() {
     signal(SIGCHLD,SIG_IGN); /* ignore child */
     signal(SIGTSTP,SIG_IGN); /* ignore tty signals */
     signal(SIGTTOU,SIG_IGN);
+    signal(SIGHUP,SIG_IGN);
     signal(SIGTTIN,SIG_IGN);
 
     return 1;
