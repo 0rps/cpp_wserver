@@ -205,7 +205,7 @@ int daemonize() {
 //    dup(i); dup(i); /* handle standart I/O */
 
     umask(027); /* set newly created file permissions */
-//    chdir(RUNNING_DIR); /* change running directory */
+    chdir("/tmp"); /* change running directory */
     lfp=open(LOCK_FILE,O_RDWR|O_CREAT,0640);
     if (lfp<0) exit(1); /* can not open */
     if (lockf(lfp, F_TLOCK, 0) < 0 )
