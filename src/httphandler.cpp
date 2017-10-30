@@ -6,6 +6,8 @@
 
 #include <regex>
 
+#include <unistd.h>
+
 HttpMessage::HttpMessage(const bool isResponse):
     m_isResponse(isResponse)
 {
@@ -19,7 +21,7 @@ HttpMessage::~HttpMessage()
 }
 
 
-int HttpMessage::getCode() const
+MessageType HttpMessage::getCode() const
 {
     return m_code;
 }
@@ -43,7 +45,7 @@ std::string HttpMessage::getRequest() const
 }
 
 
-void HttpMessage::setCode(int _code)
+void HttpMessage::setCode(MessageType _code)
 {
     m_code = _code;
 }
@@ -66,19 +68,41 @@ void HttpMessage::setBody(const std::string &_body)
     m_body = _body;
 }
 
-char *HttpMessage::getRawMessage()
+std::string HttpMessage::getRawMessage()
 {
-//    if (!m_isResponse) {
-//        return NULL;
-//    }
+    //std::cout << "HttpMessage: body = '" << m_body << "'" << std::endl;
+    //std::cout << "HttpMessage: body length = '" << m_body.length() << "'" << std::endl;
+    const std::string p_delimiter = "\r\n";
+    const std::string p_code = std::to_string((int)m_code);
+    const std::string p_contentType = "text/html";
 
-    char* ans = "HTTP/1.1 200 \r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body>HELLO WORLD!<body></html>";
+    std::string p_reasonPhrase;
+    std::string p_contentLength = m_body.length() > 0 ? std::to_string(strlen(m_body.c_str()) - 1) : "0";
+    std::string p_body = m_body;
 
-    return ans;
+
+    if (m_code == MT_NotFound) {
+        p_reasonPhrase = "Not Found";
+    } else if (m_code == MT_ServerError) {
+        p_reasonPhrase = "Internal Server Error";
+    } else {
+        p_reasonPhrase = "OK";
+    }
+
+    std::string p_result = "HTTP/1.1 " + p_code + " " + p_reasonPhrase + p_delimiter;
+    p_result += "Content-Type: " + p_contentType + p_delimiter;
+    p_result += "Content-Length: " + p_contentLength + p_delimiter;
+    p_result += p_delimiter + p_body;
+
+    return p_result;
+
+//    char* ans = "HTTP/1.1 200 \r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body>HELLO WORLD!<body></html>";
+
+//    return ans;
 }
 
 HttpHandler::HttpHandler() :
-    m_buffer(NULL), m_maxSize(0), m_size(0)
+    m_buffer(NULL),  m_size(0), m_maxSize(0)
 {
     m_maxSize = 64;
     m_buffer = (char*)malloc(m_maxSize);
@@ -87,7 +111,7 @@ HttpHandler::HttpHandler() :
 
 HttpHandler::~HttpHandler()
 {
-
+    free(m_buffer);
 }
 
 void HttpHandler::addRawData(const char *_data, const int _size)
@@ -123,13 +147,13 @@ void HttpHandler::parseSimpleRequest(std::string &_request)
         msg.setRequest(_request.substr(4));
     }
 
-    std::cout << "new message with simple request: '" << msg.getRequest() << "'" << std::endl;
+    //std::cout << "new message with simple request: '" << msg.getRequest() << "'" << std::endl;
     m_messages.push_back(msg);
 }
 
 void HttpHandler::parseFullRequest(std::string &_request)
 {
-    int lastSymbol = _request.find("\r\n");
+    auto lastSymbol = _request.find("\r\n");
     if (lastSymbol == std::string::npos) {
         lastSymbol = _request.size();
     }
@@ -138,7 +162,7 @@ void HttpHandler::parseFullRequest(std::string &_request)
     int requestURISize = lastSymbol - 4 - 9;
     msg.setRequest(_request.substr(4, requestURISize));
 
-    std::cout << "new message with full request: '" << msg.getRequest() << "'" << std::endl;
+    //std::cout << "new message with full request: '" << msg.getRequest() << "'" << std::endl;
 
     m_messages.push_back(msg);
 }
@@ -172,7 +196,7 @@ void HttpHandler::parseBuffer()
     }
 
     std::string p_firstString(m_size, firstStringSize);
-    std::cout << "First string " << p_firstString << std::endl;
+    //std::cout << "First string " << p_firstString << std::endl;
 
     int cuttedSize = 0;
 
@@ -216,4 +240,80 @@ void HttpHandler::parseBuffer()
         }
         parseBuffer();
     }
+}
+
+
+FileExtractor::FileExtractor(const std::string &_dir): m_dir(_dir)
+{
+    if (m_dir.length() > 0) {
+        if (m_dir.back() == '/') {
+            m_dir.pop_back();
+        }
+    }
+}
+
+const std::string FileExtractor::getFileContent(const std::string &_relpath, int &_error) const
+{
+    const std::string &p_path = getFullPath(_relpath);
+    //std::cout << "FileExtractor: full path = " << p_path << std::endl;
+    FILE *file;
+    int fileSize;
+    char* buf;
+
+    _error = 0;
+
+    file = fopen(p_path.c_str(), "r");
+
+    if (file == NULL) {
+        _error = -1;;
+        return std::string();
+    }
+
+    fseek(file, 0, SEEK_END);
+    fileSize = ftell(file);
+    rewind(file);
+
+    buf = (char*)malloc(fileSize*sizeof(char));
+
+    if (buf == NULL) {
+        _error = -2;
+        return std::string();
+    }
+
+    int resultSize = fread(buf, sizeof(char), fileSize, file);
+    if (resultSize != fileSize) {
+        free(buf);
+        _error = -2;
+        return std::string();
+    }
+
+    std::string p_result(buf, fileSize);
+    return p_result;
+}
+
+bool FileExtractor::fileExists(const std::string &_relpath) const
+{
+    return fileExists(_relpath, true);
+}
+
+const std::string FileExtractor::getFullPath(const std::string &_relpath) const
+{
+    std::string p_path = m_dir;
+    if (_relpath.front() != '/') {
+        p_path.push_back('/');
+    }
+    p_path += _relpath;
+
+    return p_path;
+}
+
+bool FileExtractor::fileExists(const std::string &_path, const bool _isRelative) const
+{
+    const std::string& p_path = _isRelative ? getFullPath(_path) : _path;
+
+    if (access(p_path.c_str(), R_OK) == -1) {
+        return false;
+    }
+
+    return true;
 }

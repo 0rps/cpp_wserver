@@ -2,17 +2,20 @@
 
 class Worker {
 public:
-    Worker(int _number, int _sockFd, char* _shared, const std::string &_dir);
+    Worker(int _number, int _sockFd, int* _shared, const std::string &_dir);
     ~Worker();
 
-    bool tryToHandle();
+    int waitClientSocket();
+    bool tryToHandle(int _clientSocket);
     bool isError();
 
 private:
     int m_number;
-    int m_socketFd;
+    int m_socketToParentFd;
 
-    char* m_sharedMem;
+    int* m_sharedMem;
+
+    std::string m_dir;
 
     bool m_isError;
 

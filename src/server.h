@@ -21,5 +21,6 @@ private:
 
 private:
     int* m_sharedMemory;
+    int next;
     std::map<int, WorkerData> m_workers;
 };
