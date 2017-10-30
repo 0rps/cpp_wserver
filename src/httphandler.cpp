@@ -91,7 +91,7 @@ std::string HttpMessage::getRawMessage()
         p_reasonPhrase = "OK";
     }
 
-    std::string p_result = "HTTP/1.1 " + p_code + " " + p_reasonPhrase + p_delimiter;
+    std::string p_result = "HTTP/1.0 " + p_code + " " + p_reasonPhrase + p_delimiter;
     p_result += "Content-Type: " + p_contentType + p_delimiter;
     p_result += "Content-Length: " + p_contentLength + p_delimiter;
     p_result += p_delimiter + p_body;
@@ -189,7 +189,7 @@ void HttpHandler::parseBuffer()
 
     bool isFullRequest = false;
     if (firstStringSize > 9) {
-        char httpMarker[] = "HTTP/1.1";
+        char httpMarker[] = "HTTP/1.0";
         int httpMarkerSize = sizeof(httpMarker) - 1;
         char *markerPossiblePosition = m_buffer + firstStringSize - httpMarkerSize;
         if (strncmp(markerPossiblePosition, httpMarker, httpMarkerSize) == 0) {
