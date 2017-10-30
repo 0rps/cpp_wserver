@@ -89,9 +89,11 @@ int Worker::waitClientSocket()
 
 bool Worker::tryToHandle(int _clientSocket)
 {
+    std::cout << lgname << "Try to handle client request" << std::endl;
+
     *m_sharedMem = 1;
 
-    char buffer[72];
+    char buffer[256];
     const int bufferSize = sizeof(buffer);
 
     FileExtractor p_fileExtractor(m_dir);
@@ -100,6 +102,7 @@ bool Worker::tryToHandle(int _clientSocket)
     while(true) {
         int count = read(_clientSocket, buffer, bufferSize);
         if (count <= 0) {
+            std::cout << lgname << "Client close connection" << std::endl;
             close(_clientSocket);
             break;
         }
@@ -108,7 +111,7 @@ bool Worker::tryToHandle(int _clientSocket)
 
         while(p_handler.hasMessages()) {
             HttpMessage httpMsg = p_handler.pop();
-            std::string relPath = httpMsg.getRequest();
+            std::string relPath = httpMsg.getRequestPath();
 
             HttpMessage httpResponseMsg(true);
 
@@ -130,7 +133,7 @@ bool Worker::tryToHandle(int _clientSocket)
             const std::string p_responseString = httpResponseMsg.getRawMessage();
 
             std::cout << std::endl;
-            std::cout << lgname << "Handle message: request = " << httpMsg.getRequest() << std::endl;
+            std::cout << lgname << "Handle message: request = " << httpMsg.getRequest() << ", path = " << httpMsg.getRequestPath() << std::endl;
             std::cout << lgname << "--------------: response = " << p_responseString << std::endl << std::endl;
 
             write(_clientSocket, p_responseString.c_str(), strlen(p_responseString.c_str()) - 1);
@@ -139,6 +142,7 @@ bool Worker::tryToHandle(int _clientSocket)
         if (!p_handler.hasRawData()) {
             shutdown(_clientSocket, SHUT_RDWR);
             close(_clientSocket);
+            std::cout << lgname << "Close connection after handling" << std::endl;
             break;
         }
     }

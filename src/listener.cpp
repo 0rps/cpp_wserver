@@ -63,15 +63,7 @@ bool Listener::start()
     sin.sin_family = AF_INET;
     sin.sin_port = htons(m_paramPort);
 
-    /// struct hostent *info = gethostbyname(m_paramAddr.c_str);
-    /// if (info == NULL) { ... }
-    /// sin.sin_addr = *(struct in_addr *) info->h_addr;
-
-    //sin.sin_addr = htonl(INADDR_LOOPBACK);
-    //sin.sin_addr.s_addr = htonl(INADDR_ANY);
     inet_aton(m_paramAddr.c_str(), &sin.sin_addr);
-
-    std::cout << "real addr: " << m_paramAddr << ", sin addr" << sin.sin_addr.s_addr << " , port = " << sin.sin_port << std::endl;
 
     int optval = 1;
     if (setsockopt(m_listenSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
@@ -107,7 +99,6 @@ bool Listener::shutdown()
 {
     std::cout << "Listener: try shutdown" << std::endl;
     if (m_isStarted) {
-        /// check and handle errors
         ::shutdown(m_listenSocket, SHUT_RDWR);
         close(m_listenSocket);
     }
@@ -118,25 +109,6 @@ bool Listener::shutdown()
 
 int Listener::nextSocket()
 {
-//    struct sockaddr_in client;
-//    int client_size = sizeof(client);
-//    int resFd = accept(m_listenSocket, (struct sockaddr*)&client, (socklen_t*)&client_size);
-
-//    char buf[512];
-//    int count;
-
-//    count = read(resFd, buf, 512);
-
-//    HttpHandler p_handler;
-//    p_handler.addRawData(buf, count);
-
-//    if (p_handler.hasMessages()) {
-//        HttpMessage msg = p_handler.messages().at(0);
-//        std::cout << "Request: " << msg.getRequest() << std::endl;
-//    } else {
-//        std::cout << "OLOLOLO" << std::endl;
-//    }
-
     std::cout << "Listener: next socket" << std::endl;
 
     fd_set set;

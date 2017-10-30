@@ -5,10 +5,10 @@
 #include <string.h>
 #include <memory>
 #include <memory.h>
-
 #include <regex>
-
 #include <unistd.h>
+
+#include "config.h"
 
 HttpMessage::HttpMessage(const bool isResponse):
     m_isResponse(isResponse)
@@ -40,6 +40,16 @@ std::string HttpMessage::getBody() const
     return m_body;
 }
 
+std::string HttpMessage::getRequestPath() const
+{
+    return m_requestPath;
+}
+
+std::string HttpMessage::getRequestParams() const
+{
+    return m_requestPars;
+}
+
 
 std::string HttpMessage::getRequest() const
 {
@@ -55,11 +65,14 @@ void HttpMessage::setCode(MessageType _code)
 void HttpMessage::setRequest(const std::string &_request)
 {
     m_request = _request;
-    for (int i = 0; i < _request.length(); i++) {
-        if (m_request.at(i) == '?') {
-            m_request = m_request.substr(0,i);
-            break;
-        }
+
+    auto pos = m_request.find('?');
+    if (pos != std::string::npos) {
+        m_requestPath = m_request.substr(0, pos);
+        m_requestPars = m_request.substr(pos);
+    } else {
+        m_requestPath = m_request;
+        m_requestPars = "";
     }
 }
 
@@ -78,8 +91,6 @@ void HttpMessage::setBody(const std::string &_body)
 
 std::string HttpMessage::getRawMessage()
 {
-    //std::cout << "HttpMessage: body = '" << m_body << "'" << std::endl;
-    //std::cout << "HttpMessage: body length = '" << m_body.length() << "'" << std::endl;
     const std::string p_delimiter = "\r\n";
     const std::string p_code = std::to_string((int)m_code);
     const std::string p_contentType = "text/html";
@@ -97,16 +108,12 @@ std::string HttpMessage::getRawMessage()
         p_reasonPhrase = "OK";
     }
 
-    std::string p_result = "HTTP/1.0 " + p_code + " " + p_reasonPhrase + p_delimiter;
+    std::string p_result = std::string(HTTP_HEADER) + " " + p_code + " " + p_reasonPhrase + p_delimiter;
     p_result += "Content-Type: " + p_contentType + p_delimiter;
     p_result += "Content-Length: " + p_contentLength + p_delimiter;
     p_result += p_delimiter + p_body;
 
     return p_result;
-
-//    char* ans = "HTTP/1.1 200 \r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><body>HELLO WORLD!<body></html>";
-
-//    return ans;
 }
 
 HttpHandler::HttpHandler() :
@@ -170,8 +177,6 @@ void HttpHandler::parseFullRequest(std::string &_request)
     int requestURISize = lastSymbol - 4 - 9;
     msg.setRequest(_request.substr(4, requestURISize));
 
-    //std::cout << "new message with full request: '" << msg.getRequest() << "'" << std::endl;
-
     m_messages.push_back(msg);
 }
 
@@ -195,7 +200,7 @@ void HttpHandler::parseBuffer()
 
     bool isFullRequest = false;
     if (firstStringSize > 9) {
-        char httpMarker[] = "HTTP/1.0";
+        char httpMarker[] = HTTP_HEADER;
         int httpMarkerSize = sizeof(httpMarker) - 1;
         char *markerPossiblePosition = m_buffer + firstStringSize - httpMarkerSize;
         if (strncmp(markerPossiblePosition, httpMarker, httpMarkerSize) == 0) {

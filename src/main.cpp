@@ -15,16 +15,12 @@
 #include "string.h"
 
 #include "listener.h"
-//#include "httphandler.h"
 #include "worker.h"
 #include "server.h"
+#include "config.h"
 
-// /home/box/final/final -h <ip> -p <port> -d <directory>
-
-const int constWorkersCount = 4;
 
 static const char *optString = "h:p:d:";
-//static std::string staticDir;
 
 struct Parameters {
 
@@ -42,19 +38,6 @@ struct Parameters {
 bool parseParameters(struct Parameters *_params, int argc, char** argv) {
 using namespace std;
 
-//    cout << "read argv" << endl;
-//    for (int i = 0; i < argc; i++) {
-//        cout << "param " << i << " = " << argv[i] << endl;
-//    }
-
-//    cout << endl << endl;
-//    char opt;
-//    while( (opt = getopt(argc, argv, optString)) != -1) {
-//        cout << "opt = " << opt << ", param = " << optarg << endl;
-
-//    }
-
-//    cout << endl << endl;
     char opt;
     while ((opt = getopt(argc, argv, optString)) != -1) {
         std::string p((const char*)optarg);
@@ -108,64 +91,6 @@ std::pair<int,int> createUnixSocketPair() {
     }
 }
 
-//void handleSocket(int _socketFd, const std::string _dir) {
-//    if (_socketFd <= 0) {
-//        return;
-//    }
-
-//    char buffer[72];
-//    const int bufferSize = sizeof(buffer);
-
-//    FileExtractor p_fileExtractor(_dir);
-//    HttpHandler p_handler;
-
-//    while(true) {
-//        int count = read(_socketFd, buffer, bufferSize);
-//        if (count <= 0) {
-//            close(_socketFd);
-//            break;
-//        }
-
-//        p_handler.addRawData(buffer, count);
-
-//        while(p_handler.hasMessages()) {
-//            HttpMessage httpMsg = p_handler.pop();
-//            std::string relPath = httpMsg.getRequest();
-
-//            HttpMessage httpResponseMsg(true);
-
-//            if (p_fileExtractor.fileExists(relPath)) {
-//                int contentErr;
-//                std::string content = p_fileExtractor.getFileContent(relPath, contentErr);
-//                if (contentErr >= 0 ) {
-//                    httpResponseMsg.setCode(MT_OK);
-//                    httpResponseMsg.setBody(content);
-//                } else if (contentErr == -1) {
-//                    httpResponseMsg.setCode(MT_NotFound);
-//                } else if (contentErr == -2) {
-//                    httpResponseMsg.setCode(MT_ServerError);
-//                }
-//            } else {
-//                httpResponseMsg.setCode(MT_NotFound);
-//            }
-
-//            const std::string p_responseString = httpResponseMsg.getRawMessage();
-
-//            std::cout << std::endl;
-//            std::cout << "Handle message: request = " << httpMsg.getRequest() << std::endl;
-//            std::cout << "--------------: response = " << p_responseString << std::endl << std::endl;
-
-//            write(_socketFd, p_responseString.c_str(), strlen(p_responseString.c_str()) - 1);
-
-//        }
-//        if (!p_handler.hasRawData()) {
-//            shutdown(_socketFd, SHUT_RDWR);
-//            close(_socketFd);
-//            break;
-//        }
-//    }
-//}
-
 void runServer(int *_sharedMemory, const std::vector<int> &_childPids, const std::vector<int> &_childSockets, const std::string &_ip, const int _port) {
     std::string message = "My pid is " + std::to_string(getpid());
     std::cout << message << std::endl;
@@ -183,60 +108,11 @@ void runServer(int *_sharedMemory, const std::vector<int> &_childPids, const std
 
     int socketFd = listener.nextSocket();
     while (socketFd >= 0) {
-//        Worker p_worker(0, socketFd, NULL, staticDir);
-//        p_worker.tryToHandle();
         if (socketFd > 0)  {
             p_server.scheduleNewClient(socketFd);
         }
         socketFd = listener.nextSocket();
     }
-
-    //char data[] = "GET / HTTP/1.1\r\nContent-Length: 1234\r\n\r\n";
-    //int i = sizeof(data);
-
-    //p_handler.addRawData(data, sizeof(data)-1);
-
-
-
-//        if (res > 0) {
-//            int count = read(res, buf, sizeof(buf));
-//            p_handler.addRawData(buf, count);
-
-//            if (p_handler.hasMessages()) {
-
-//                std::cout << "handler has messages: " << p_message.getRequest() << std::endl;
-//            } else {
-//                std::cout << "No messages" << std::endl;
-//            }
-//        }
-//    }
-
-//    std::string p_childmessage = "YOYOYO! to = ";
-
-//    int j = 0;
-//    for (auto it = _childSockets.begin(); it != _childSockets.end(); it++) {
-//        if ( *it != -1) {
-//            //int status;
-//            std::string temp = p_childmessage + std::to_string(j);
-//            write(*it, temp.c_str(), temp.size() + 1);
-//            std::cout << "Server: send =  " << temp << std::endl;
-//        }
-//        j++;
-//    }
-
-//    for (auto it = _childPids.begin(); it != _childPids.end(); it++) {
-//        if ( *it != -1) {
-//            int status;
-//            waitpid(*it, &status, 0);
-//            std::cout << "Server: child process with pid = " << *it << " finished with status = " << status << std::endl;
-//        }
-//    }
-
-//    for (int i = 0; i < _childPids.size(); i++) {
-//        std::cout << "Server: from " << i << " shared cell read " <<_sharedMemory[i] << " value" << std::endl;
-//    }
-
-
 }
 
 void runClient(int* _sharedMemoryElement, const int _number, const std::string &_dir, const int _sockerFd) {
@@ -254,32 +130,11 @@ void runClient(int* _sharedMemoryElement, const int _number, const std::string &
             p_worker.tryToHandle(fd);
         }
     }
-
-//    char buf[512];
-//    buf[0] = 0;
-//    int count = 0;
-//    while(true) {
-//        sleep(1);
-//        count = read(_sockerFd, buf, 512);
-//        std::cout << "Readed " << count << " bytes" << std::endl;
-//        if (count == -1) {
-//            if (errno == EWOULDBLOCK) {
-//                ///
-//            } else {
-//                break;
-//            }
-//        }
-
-
-//    }
-//    std::cout << "Client with pid = " << getpid() << " read: " << buf << std::endl;
-
-//    *_sharedMemoryElement = getpid();
 }
 
 void runManagerAndWorkers(struct Parameters &_params, const int _clientsCount) {
     int* sharedMemory = (int*)allocateSharedMemory(_clientsCount, sizeof(int));
-    for (int i = 0; i < constWorkersCount; i++) {
+    for (int i = 0; i < _clientsCount; i++) {
         sharedMemory[i] = -1;
     }
 
@@ -326,36 +181,45 @@ void runManagerAndWorkers(struct Parameters &_params, const int _clientsCount) {
     runServer(sharedMemory, p_childsPids, p_childSockets, _params.ip, _params.port);
 }
 
-#define RUNNING_DIR	"/tmp"
-#define LOCK_FILE	"exampled.lock"
-#define LOG_FILE	"exampled.log"
-
 int daemonize() {
 
-    int i,lfp;
+    int pid,lfp;
     char str[10];
-        if(getppid()==1) return -1; /* already a daemon */
-        i=fork();
-        if (i<0) return -1; /* fork error */
-        if (i>0) return -1; /* parent exits */
-        /* child (daemon) continues */
-        setsid(); /* obtain a new process group */
-        for (i=getdtablesize();i>=0;--i) close(i); /* close all descriptors */
-        i=open("/home/box/final.log",O_RDWR | O_TRUNC | O_CREAT); dup(i); dup(i); /* handle standart I/O */
-        umask(027); /* set newly created file permissions */
-        chdir(RUNNING_DIR); /* change running directory */
-        lfp=open(LOCK_FILE,O_RDWR|O_CREAT,0640);
-        if (lfp<0) exit(1); /* can not open */
-        if (lockf(lfp,F_TLOCK,0)<0) exit(0); /* can not lock */
-        /* first instance continues */
-        sprintf(str,"%d\n",getpid());
-        write(lfp,str,strlen(str)); /* record pid to lockfile */
-        signal(SIGCHLD,SIG_IGN); /* ignore child */
-        signal(SIGTSTP,SIG_IGN); /* ignore tty signals */
-        signal(SIGTTOU,SIG_IGN);
-        signal(SIGTTIN,SIG_IGN);
 
-        return 1;
+    if ( getppid() == 1) {
+        return -1; /* already a daemon */
+    }
+    pid=fork();
+    if ( pid < 0 )
+        return -1; /* fork error */
+    if ( pid > 0 )
+        return -1; /* parent exits */
+
+    setsid();
+
+    for (int i=getdtablesize(); i>=0; --i) close(i);
+    /*int iFd =*/ open("/dev/null", O_RDWR);
+    /*int oFd =*/ open(INFO_LOGGER, O_RDWR | O_TRUNC | O_CREAT);
+    /*int eFd = */open(ERROR_LOGGER, O_RDWR | O_TRUNC | O_CREAT);
+//    i=open("/home/box/final.log",O_RDWR | O_TRUNC | O_CREAT);
+//    dup(i); dup(i); /* handle standart I/O */
+
+    umask(027); /* set newly created file permissions */
+//    chdir(RUNNING_DIR); /* change running directory */
+    lfp=open(LOCK_FILE,O_RDWR|O_CREAT,0640);
+    if (lfp<0) exit(1); /* can not open */
+    if (lockf(lfp, F_TLOCK, 0) < 0 )
+        return -1; /* can not lock */
+
+    sprintf(str,"%d\n",getpid());
+    write(lfp,str,strlen(str)); /* record pid to lockfile */
+
+    //signal(SIGCHLD,SIG_IGN); /* ignore child */
+    signal(SIGTSTP,SIG_IGN); /* ignore tty signals */
+    signal(SIGTTOU,SIG_IGN);
+    signal(SIGTTIN,SIG_IGN);
+
+    return 1;
 }
 
 
@@ -366,20 +230,16 @@ int main(int argc, char** argv) {
     struct Parameters params;
     if (false == parseParameters(&params, argc, argv)) {
         std::cerr << "Parameters parsing error" << std::endl;
-        return 0;
-        exit(EXIT_FAILURE);
+
     }
 
-    if (daemonize() == -1) {
-        exit(0);
-    }
+//    if (daemonize() == -1) {
+//        exit(EXIT_FAILURE);
+//    }
 
-//    staticDir = params.dir;
-
-//    std::cout << "Params: '" << params.ip << "', port:'" << params.port << "', dir:'" << params.dir << "'" << std::endl << std::endl;
-
-    runManagerAndWorkers(params, constWorkersCount);
-
+    std::cout << "Params: '" << params.ip << "', port:'" << params.port << "', dir:'" << params.dir << "'" << std::endl << std::endl;
+    runManagerAndWorkers(params, WORKERS_COUNT);
     std::cout << "Exit pid = " << getpid() << std::endl;
+
     return 0;
 }

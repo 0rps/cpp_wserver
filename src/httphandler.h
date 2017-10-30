@@ -31,6 +31,8 @@ public:
     MessageType getCode() const;
     std::vector<std::pair<std::string, std::string>> getHeaders() const;
     std::string getBody() const;
+    std::string getRequestPath() const;
+    std::string getRequestParams() const;
     std::string getRequest() const;
 
     void setCode(MessageType _code);
@@ -44,6 +46,8 @@ private:
     bool m_isResponse;
     MessageType m_code;
     std::string m_request;
+    std::string m_requestPars;
+    std::string m_requestPath;
     std::string m_body;
     std::vector< std::pair<std::string, std::string> > m_headers;
 };

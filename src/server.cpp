@@ -34,18 +34,33 @@ bool Server::scheduleNewClient(const int _socketFd)
         if (m_sharedMemory[i] == 0) {
             m_sharedMemory[i] = 1;
             std::cout << "Server: soft sending to " << i << " worker" << std::endl;
-            sendToWorker(_socketFd, i);
-            flag = true;
-            break;
+            if (sendToWorker(_socketFd, i)) {
+                flag = true;
+                break;
+            } else {
+                std::cout << "Server: soft sending to " << i << " worker failed" << std::endl;
+            }
         }
     }
 
+    int size = m_workers.size();
+
     if (!flag) {
-        next++;
-        next = next % m_workers.size();
-        std::cout << "Server: hard sending to " << next << " worker" << std::endl;
-        m_sharedMemory[next] = 1;
-        sendToWorker(_socketFd, next);
+        while (size > 0) {
+            next++;
+            next = next % m_workers.size();
+            std::cout << "Server: hard sending to " << next << " worker" << std::endl;
+            m_sharedMemory[next] = 1;
+            if (sendToWorker(_socketFd, next)) {
+                break;
+            } else {
+                std::cout << "Server: hard sending to " << next << " worker failed" << std::endl;
+            }
+            size--;
+        }
+        if (size == 0) {
+            return false;
+        }
     }
 
     return true;
