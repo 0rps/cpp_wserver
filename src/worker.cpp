@@ -25,7 +25,7 @@ Worker::~Worker()
 
 int Worker::waitClientSocket()
 {
-    std::cout << lgname << "Try to receive client socket " << std::endl;
+    //std::cout << lgname << "Try to receive client socket " << std::endl;
 
     struct msghdr msgh;
     struct iovec iov;
