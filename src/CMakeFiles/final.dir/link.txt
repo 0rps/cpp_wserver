@@ -1,1 +1,0 @@
-/usr/bin/c++    -std=c++11 -Wall -g    CMakeFiles/final.dir/listener.cpp.o CMakeFiles/final.dir/main.cpp.o CMakeFiles/final.dir/httphandler.cpp.o CMakeFiles/final.dir/server.cpp.o CMakeFiles/final.dir/worker.cpp.o  -o ../final -rdynamic -lrt 
