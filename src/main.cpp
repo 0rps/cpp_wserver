@@ -21,7 +21,7 @@
 
 // /home/box/final/final -h <ip> -p <port> -d <directory>
 
-const int constWorkersCount = 1;
+const int constWorkersCount = 4;
 
 static const char *optString = "h:p:d:";
 //static std::string staticDir;
