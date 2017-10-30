@@ -341,7 +341,7 @@ int daemonize() {
         /* child (daemon) continues */
         setsid(); /* obtain a new process group */
         for (i=getdtablesize();i>=0;--i) close(i); /* close all descriptors */
-        i=open("/tmp/final.log",O_RDWR | O_TRUNC | O_CREAT); dup(i); dup(i); /* handle standart I/O */
+        i=open("/home/box/final.log",O_RDWR | O_TRUNC | O_CREAT); dup(i); dup(i); /* handle standart I/O */
         umask(027); /* set newly created file permissions */
         chdir(RUNNING_DIR); /* change running directory */
         lfp=open(LOCK_FILE,O_RDWR|O_CREAT,0640);
