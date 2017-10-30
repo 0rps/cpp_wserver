@@ -326,6 +326,39 @@ void runManagerAndWorkers(struct Parameters &_params, const int _clientsCount) {
     runServer(sharedMemory, p_childsPids, p_childSockets, _params.ip, _params.port);
 }
 
+#define RUNNING_DIR	"/tmp"
+#define LOCK_FILE	"exampled.lock"
+#define LOG_FILE	"exampled.log"
+
+int daemonize() {
+
+    int i,lfp;
+    char str[10];
+        if(getppid()==1) return -1; /* already a daemon */
+        i=fork();
+        if (i<0) return -1; /* fork error */
+        if (i>0) return -1; /* parent exits */
+        /* child (daemon) continues */
+        setsid(); /* obtain a new process group */
+        for (i=getdtablesize();i>=0;--i) close(i); /* close all descriptors */
+        i=open("/dev/null",O_RDWR); dup(i); dup(i); /* handle standart I/O */
+        umask(027); /* set newly created file permissions */
+        chdir(RUNNING_DIR); /* change running directory */
+        lfp=open(LOCK_FILE,O_RDWR|O_CREAT,0640);
+        if (lfp<0) exit(1); /* can not open */
+        if (lockf(lfp,F_TLOCK,0)<0) exit(0); /* can not lock */
+        /* first instance continues */
+        sprintf(str,"%d\n",getpid());
+        write(lfp,str,strlen(str)); /* record pid to lockfile */
+        signal(SIGCHLD,SIG_IGN); /* ignore child */
+        signal(SIGTSTP,SIG_IGN); /* ignore tty signals */
+        signal(SIGTTOU,SIG_IGN);
+        signal(SIGTTIN,SIG_IGN);
+
+        return 1;
+}
+
+
 int main(int argc, char** argv) {
 
     std::cout << "Starting pid=" << getpid() << std::endl;
@@ -337,9 +370,13 @@ int main(int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
+    if (daemonize() == -1) {
+        exit(0);
+    }
+
 //    staticDir = params.dir;
 
-    std::cout << "Params: '" << params.ip << "', port:'" << params.port << "', dir:'" << params.dir << "'" << std::endl << std::endl;
+//    std::cout << "Params: '" << params.ip << "', port:'" << params.port << "', dir:'" << params.dir << "'" << std::endl << std::endl;
 
     runManagerAndWorkers(params, constWorkersCount);
 
