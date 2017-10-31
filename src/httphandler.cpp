@@ -290,6 +290,7 @@ const std::string FileExtractor::getFileContent(const std::string &_relpath, int
 
     if (buf == NULL) {
         _error = -2;
+        fclose(file);
         return std::string();
     }
 
@@ -297,10 +298,12 @@ const std::string FileExtractor::getFileContent(const std::string &_relpath, int
     if (resultSize != fileSize) {
         free(buf);
         _error = -2;
+        fclose(file);
         return std::string();
     }
 
     std::string p_result(buf, fileSize);
+    fclose(file);
     return p_result;
 }
 

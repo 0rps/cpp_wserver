@@ -110,6 +110,7 @@ void runServer(int *_sharedMemory, const std::vector<int> &_childPids, const std
     while (socketFd >= 0) {
         if (socketFd > 0)  {
             p_server.scheduleNewClient(socketFd);
+            close(socketFd);
         }
         socketFd = listener.nextSocket();
     }
@@ -128,6 +129,7 @@ void runClient(int* _sharedMemoryElement, const int _number, const std::string &
 
         if (fd > 0) {
             p_worker.tryToHandle(fd);
+            close(fd);
         }
     }
 }
