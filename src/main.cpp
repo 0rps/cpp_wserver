@@ -129,7 +129,6 @@ void runClient(int* _sharedMemoryElement, const int _number, const std::string &
 
         if (fd > 0) {
             p_worker.tryToHandle(fd);
-            close(fd);
         }
     }
 }
