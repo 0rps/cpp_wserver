@@ -187,7 +187,7 @@ int daemonize() {
     char str[10];
 
     if ( getppid() == 1) {
-        return -1; /* already a daemon */
+        exit(0); /* already a daemon */
     }
     pid=fork();
     if ( pid < 0 )
@@ -197,19 +197,54 @@ int daemonize() {
 
     setsid();
 
-    for (int i=getdtablesize(); i>=0; --i) close(i);
     int iFd = open("/dev/null", O_RDWR);
     int oFd = open(INFO_LOGGER, O_RDWR | O_TRUNC | O_CREAT);
     int eFd = open(ERROR_LOGGER, O_RDWR | O_TRUNC | O_CREAT);
+
+    if (iFd < 0) {
+        std::cout << "Couldn't open ifd" << std::endl;
+        return -1;
+    }
+
+    if (oFd < 0) {
+        std::cout << "Couldn't open ofd" << std::endl;
+        return -1;
+    }
+
+    if (eFd < 0) {
+        std::cout << "Couldn't open efd" << std::endl;
+        return -1;
+    }
+
+    for (int i=getdtablesize(); i>=0; --i) {
+        if (i != iFd && i != oFd && i != eFd) {
+            close(i);
+        }
+    };
+
+    if (dup2(iFd, 0) == -1) {
+        return -1;
+    }
+
+    if (dup2(oFd, 1) == -1) {
+        return -1;
+    }
+
+    if (dup2(eFd, 2) == -1) {
+        return -1;
+    }
+
+    close(iFd); close(oFd); close(eFd);
+
 //    i=open("/home/box/final.log",O_RDWR | O_TRUNC | O_CREAT);
 //    dup(i); dup(i); /* handle standart I/O */
 
     umask(027); /* set newly created file permissions */
     chdir("/tmp"); /* change running directory */
     lfp=open(LOCK_FILE,O_RDWR|O_CREAT,0640);
-    if (lfp<0) exit(1); /* can not open */
+    if (lfp<0) exit(0); /* can not open */
     if (lockf(lfp, F_TLOCK, 0) < 0 )
-        return -1; /* can not lock */
+        exit(0); /* can not lock */
 
     sprintf(str,"%d\n",getpid());
     write(lfp,str,strlen(str)); /* record pid to lockfile */
@@ -217,7 +252,7 @@ int daemonize() {
     signal(SIGCHLD,SIG_IGN); /* ignore child */
     signal(SIGTSTP,SIG_IGN); /* ignore tty signals */
     signal(SIGTTOU,SIG_IGN);
-    signal(SIGHUP,SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
     signal(SIGTTIN,SIG_IGN);
 
     return 1;
